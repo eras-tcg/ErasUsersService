@@ -29,7 +29,7 @@ pipeline {
                     docker run -d \\
                         --name ${IMAGE_NAME}-staging \\
                         --restart unless-stopped \\
-                        --env-file /etc/users-service/.env \\
+                        --env-file /etc/users-service-staging/.env \\
                         -p 8090:8080 \\
                         ${IMAGE_NAME}:${GIT_COMMIT}
                 """
