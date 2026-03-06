@@ -14,4 +14,5 @@ public class RolesProperties {
 
     private String baseUsername;
     private String basePassword;
+    private String baseEmail;
 }

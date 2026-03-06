@@ -42,13 +42,17 @@ public class SystemStartupValidator {
             });
 
             if (userRepository.findByUsername(baseUsername) == null) {
-                User user = new User(baseUsername, null, passwordEncoder.encode(rolesProperties.getBasePassword()));
+                User user = new User(baseUsername, rolesProperties.getBaseEmail(), passwordEncoder.encode(rolesProperties.getBasePassword()));
                 user.setRole(role);
+                user.setVerified(true);
+                user.setVerificationToken(null);
                 userRepository.save(user);
             }
         } else {
             if (userRepository.findByUsername(baseUsername) == null) {
-                User user = new User(baseUsername, null, passwordEncoder.encode(rolesProperties.getBasePassword()));
+                User user = new User(baseUsername, rolesProperties.getBaseEmail(), passwordEncoder.encode(rolesProperties.getBasePassword()));
+                user.setVerified(true);
+                user.setVerificationToken(null);
                 userRepository.save(user);
             }
         }
