@@ -59,7 +59,7 @@ pipeline {
                         --name ${IMAGE_NAME}-prod \\
                         --restart unless-stopped \\
                         --env-file /etc/users-service/.env \\
-                        -p 8080:8080 \\
+                        -p 8082:8080 \\
                         ${IMAGE_NAME}:${GIT_COMMIT}
                 """
             }
