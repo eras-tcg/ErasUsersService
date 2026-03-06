@@ -1,0 +1,9 @@
+services:
+  users-service:
+    image: capitanpio/users-service:latest
+    container_name: users_service
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env          # create this file on the VPS with all required secrets
+    restart: unless-stopped
