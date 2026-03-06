@@ -1,0 +1,160 @@
+# Users Service
+
+A generic authentication and user management REST API built with Spring Boot 4, featuring JWT-based security and fully configurable validation rules.
+
+## Tech Stack
+
+- **Java 21**
+- **Spring Boot 4.0.3**
+- **Spring Security** — stateless JWT authentication
+- **Spring Data JPA** — H2 file-based database
+- **Bean Validation** — dynamic validation rules via `application.properties`
+- **jjwt 0.13.0** — JWT generation and parsing
+- **Lombok**
+
+## Project Structure
+
+```
+users_service/
+├── config/
+│   ├── AdminProperties.java       # admin.* properties
+│   ├── CorsProperties.java        # cors.* properties
+│   ├── JwtAuthFilter.java         # JWT request filter
+│   ├── JwtProperties.java         # jwt.* properties
+│   ├── SecurityConfig.java        # Spring Security setup
+│   └── UserProperties.java        # user.* properties
+├── controller/
+│   ├── AuthController.java        # Auth endpoints
+│   └── RolesController.java       # Roles endpoints (WIP)
+├── dto/                           # Request / response objects
+├── model/
+│   └── User.java                  # User entity
+├── repository/
+│   └── UserRepository.java
+├── service/
+│   ├── AuthService.java           # Login logic
+│   ├── CustomUserDetailsService.java
+│   └── UsersManagerService.java   # Registration, delete, change password
+├── utils/
+│   └── JwtUtils.java              # Token generation and validation
+└── validation/
+    ├── ValidUsername.java          # @ValidUsername annotation
+    ├── UsernameValidator.java
+    ├── ValidPassword.java          # @ValidPassword annotation
+    └── PasswordValidator.java
+```
+
+## Running
+
+```bash
+./mvnw spring-boot:run
+```
+
+Runs on `http://localhost:8080` by default.
+
+## API Endpoints
+
+All endpoints are prefixed with `/api/auth`.
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/health` | No | Health check |
+| POST | `/register` | No | Register a new user |
+| POST | `/login` | No | Login, returns JWT token |
+| GET | `/users` | Yes | List all users |
+| DELETE | `/users/{username}` | Yes | Delete a user |
+| POST | `/change-password` | Yes | Change password |
+
+### POST `/api/auth/register`
+
+```json
+{
+  "username": "johndoe",
+  "email": "john@example.com",
+  "password": "Secure@123"
+}
+```
+
+**200** — registered successfully
+**400** — validation failed, returns a map of field errors:
+```json
+{
+  "username": "Username must be between 3 and 20 characters",
+  "password": "Password must contain at least one uppercase letter"
+}
+```
+
+### POST `/api/auth/login`
+
+```json
+{
+  "username": "johndoe",
+  "password": "Secure@123"
+}
+```
+
+**200** — returns JWT token
+**401** — `"Invalid username or password"` (format violations and wrong credentials return the same generic message)
+
+### POST `/api/auth/change-password`
+
+Requires `Authorization: Bearer <token>` header.
+
+```json
+{
+  "oldPassword": "Secure@123",
+  "newPassword": "NewSecure@456"
+}
+```
+
+Changing the password increments `tokenVersion`, invalidating all previously issued tokens.
+
+## Authentication
+
+Protected endpoints require a JWT in the `Authorization` header:
+
+```
+Authorization: Bearer <token>
+```
+
+Tokens are signed with HMAC and include:
+- `sub` — username
+- `iat` — issued at
+- `exp` — expiration
+- `token_version` — used to invalidate tokens after a password change
+
+## Validation Rules
+
+Rules are fully configurable in `application.properties`. The same rules apply to both registration (field-specific errors) and login (generic message).
+
+| Property | Default | Description |
+|----------|---------|-------------|
+| `user.username.min-length` | `3` | Minimum username length |
+| `user.username.max-length` | `20` | Maximum username length |
+| `user.password.min-length` | `8` | Minimum password length |
+| `user.password.max-length` | `64` | Maximum password length |
+| `user.password.has-uppercase` | `true` | Require uppercase letter |
+| `user.password.has-lowercase` | `true` | Require lowercase letter |
+| `user.password.has-digit` | `true` | Require a digit |
+| `user.password.has-special` | `true` | Require a special character |
+| `user.password.special-chars` | `!@#$%^&*...` | Allowed special characters |
+
+Usernames only allow letters, numbers, and underscores (`[a-zA-Z0-9_]`).
+
+## Configuration Reference
+
+```properties
+# Database
+spring.datasource.url=jdbc:h2:file:./users_db
+
+# JWT
+jwt.secret=REDACTED
+jwt.expiration=86400000        # milliseconds (default: 1 day)
+
+# CORS
+cors.allowed-origin=http://localhost:5175
+
+# Behaviour
+user.can-delete-own-account=false
+admin.can-change-password-authoritatively=true
+```
