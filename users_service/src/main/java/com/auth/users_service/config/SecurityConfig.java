@@ -40,7 +40,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.addAllowedOrigin(corsProperties.getAllowedOrigin());
+        config.setAllowedOrigins(corsProperties.getAllowedOrigins());
         config.addAllowedMethod("*");
         config.addAllowedHeader("*");
 
