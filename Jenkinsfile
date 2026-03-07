@@ -30,7 +30,7 @@ pipeline {
                         --name ${IMAGE_NAME}-staging \\
                         --restart unless-stopped \\
                         --env-file /etc/users-service-staging/.env \\
-                        -p 8090:8080 \\
+                        -p 8090:8090 \\
                         ${IMAGE_NAME}:${GIT_COMMIT}
                 """
             }
@@ -59,7 +59,7 @@ pipeline {
                         --name ${IMAGE_NAME}-prod \\
                         --restart unless-stopped \\
                         --env-file /etc/users-service/.env \\
-                        -p 8082:8080 \\
+                        -p 8082:8082 \\
                         ${IMAGE_NAME}:${GIT_COMMIT}
                 """
             }
