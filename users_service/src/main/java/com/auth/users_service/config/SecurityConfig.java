@@ -58,7 +58,7 @@ public class SecurityConfig {
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // Set session management to stateless
             .authorizeHttpRequests((request) -> request // Allow unauthenticated access to the /health endpoint, require authentication for all other endpoints
                     // permit auth routes (now under /api/auth) and health
-                    .requestMatchers("/api/health", "/api/auth/register", "/api/auth/login", "/api/auth/change-password").permitAll()
+                    .requestMatchers("/api/health", "/api/auth/register", "/api/auth/login", "/api/auth/change-password", "/api/auth/verify").permitAll()
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
