@@ -5,7 +5,7 @@ services:
     ports:
       - "${USERS_SERVICE_PORT:-8090}:8090"
     env_file:
-      - .env          # create this file on the VPS with all required secrets
+      - /etc/users-service-${ENVIRONMENT:-prod}/.env
     restart: unless-stopped
     networks:
       - eras-network
@@ -13,4 +13,3 @@ services:
 networks:
   eras-network:
     external: true
-    
