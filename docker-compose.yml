@@ -1,15 +1,16 @@
 services:
   users-service:
-    image: capitanpio/users-service:latest
+    build:
+      context: ./users_service
     container_name: users-service-${ENVIRONMENT:-prod}
     ports:
       - "${USERS_SERVICE_PORT:-8090}:8090"
     env_file:
-      - /etc/users-service-${ENVIRONMENT:-prod}/.env
+      - ./users_service/.env
     restart: unless-stopped
     networks:
       - eras-network
 
 networks:
   eras-network:
-    external: true
+    external: false
