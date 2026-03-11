@@ -5,8 +5,10 @@ import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
 
 
@@ -38,7 +40,11 @@ public class User implements UserDetails {
     }
 
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return Collections.emptyList();
+        if (role == null || role.getPermissions() == null) return Collections.emptyList();
+        return role.getPermissions().stream()
+                .filter(p -> p.getName() != null)
+                .map(p -> new SimpleGrantedAuthority(p.getName()))
+                .toList();
     }
 
     public boolean isAccountNonExpired() {

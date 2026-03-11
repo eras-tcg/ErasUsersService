@@ -16,6 +16,7 @@ import com.auth.users_service.model.Permission;
 import com.auth.users_service.service.PermissionsService;
 import com.auth.users_service.dto.CreatePermissionRequest;
 import java.util.Map;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 @RestController
 @RequestMapping("/api")
@@ -28,16 +29,18 @@ public class PermissionsController {
         this.permissionsService = permissionsService;
     }
 
+    @PreAuthorize("hasAuthority('manage_permissions')")
     @PostMapping("/permissions")
     public ResponseEntity<Object> createPermission(@RequestBody CreatePermissionRequest request) {
         try{
-            return ResponseEntity.ok(permissionsService.createPermission(request.getName()));
+            return ResponseEntity.ok(permissionsService.createPermission(request.getName(), request.getDescription()));
         }
         catch(RuntimeException e){
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", e.getMessage()));
         }
     }
 
+    @PreAuthorize("hasAuthority('read_permissions')")
     @GetMapping("/permissions/{name}")
     public ResponseEntity<Object> readPermission(@PathVariable String name) {
         try{
@@ -48,6 +51,7 @@ public class PermissionsController {
         }
     }
 
+    @PreAuthorize("hasAuthority('read_permissions')")
     @GetMapping("/permissions")
     public ResponseEntity<Object> readAllPermissions() {
         try{
@@ -59,6 +63,7 @@ public class PermissionsController {
         }
     }
 
+    @PreAuthorize("hasAuthority('manage_permissions')")
     @DeleteMapping("/permissions/{id}")
     public ResponseEntity<Object> deletePermission(@PathVariable String id) {
         try{
@@ -70,10 +75,11 @@ public class PermissionsController {
         }
     }
 
+    @PreAuthorize("hasAuthority('manage_permissions')")
     @PutMapping("/permissions/{id}")
     public ResponseEntity<Object> editPermission(@PathVariable String id, @RequestBody Map<String, String> body) {
         try{
-            Permission response = permissionsService.editPermission(id, body.get("newName"));
+            Permission response = permissionsService.editPermission(id, body.get("newName"), body.get("description"));
             return ResponseEntity.ok(response);
         }
         catch(RuntimeException e){

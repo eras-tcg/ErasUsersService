@@ -15,6 +15,7 @@ import com.auth.users_service.dto.CreateRoleRequest;
 import com.auth.users_service.dto.EditRoleRequest;
 import com.auth.users_service.model.Role;
 import com.auth.users_service.service.RolesService;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 
 @RestController
@@ -28,6 +29,7 @@ public class RolesController {
         this.rolesService = rolesService;
     }
 
+    @PreAuthorize("hasAuthority('manage_roles')")
     @PostMapping("/roles")
     public ResponseEntity<Object> createRole(@RequestBody CreateRoleRequest request) {
         try{
@@ -46,12 +48,14 @@ public class RolesController {
         return ResponseEntity.ok(response);
     }
 
+    @PreAuthorize("hasAuthority('manage_roles')")
     @GetMapping("/roles")
     public ResponseEntity<List<Role>> readAllRoles() {
         List<Role> response = rolesService.readAllRoles();
         return ResponseEntity.ok(response);
     }
 
+    @PreAuthorize("hasAuthority('manage_roles')")
     @DeleteMapping("/roles/{name}")
     public ResponseEntity<Object> deleteRole(@PathVariable String name) {
         try{
@@ -63,6 +67,7 @@ public class RolesController {
 
     }
 
+    @PreAuthorize("hasAuthority('manage_roles')")
     @PutMapping("/roles")
     public ResponseEntity<Object> editRole(@RequestBody EditRoleRequest request) {
         try{

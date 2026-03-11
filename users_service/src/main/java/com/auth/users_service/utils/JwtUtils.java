@@ -2,6 +2,7 @@ package com.auth.users_service.utils;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
+import java.util.List;
 
 import javax.crypto.SecretKey;
 
@@ -29,13 +30,20 @@ public class JwtUtils {
 
         SecretKey key = getSigningKey();
 
+        List<String> permissions = (user.getRole() != null && user.getRole().getPermissions() != null)
+            ? user.getRole().getPermissions().stream()
+                  .map(p -> p.getName())
+                  .filter(n -> n != null)
+                  .toList()
+            : List.of();
+
         String token = Jwts.builder()
         .subject(user.getId())
         .issuedAt(new Date())
         .expiration(new Date((new Date()).getTime() + jwtProperties.getExpiration()))
-
         .signWith(key)
         .claim("token_version", user.getTokenVersion())
+        .claim("permissions", permissions)
         .compact();
 
         return token;
@@ -52,7 +60,7 @@ public class JwtUtils {
     }
 
     public String extractId(String token) {
-        
+
         SecretKey key = getSigningKey();
 
         try {
@@ -70,7 +78,7 @@ public class JwtUtils {
             } else {
                 throw new RuntimeException("Invalid JWT token");
             }
-        } 
+        }
     }
 
     public int extractTokenVersion(String token) {
@@ -91,7 +99,6 @@ public class JwtUtils {
             } else {
                 throw new RuntimeException("Invalid JWT token");
             }
-        } 
+        }
     }
 }
-    

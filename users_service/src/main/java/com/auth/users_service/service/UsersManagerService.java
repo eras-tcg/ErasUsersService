@@ -32,7 +32,7 @@ public class UsersManagerService {
     public List<UserDTO> getAllUsers() {
         return userRepository.findAll()
             .stream()
-            .map(u -> new UserDTO(u.getId(), u.getUsername(), u.getEmail(), u.getRole() != null ? u.getRole().getName() : null))
+            .map(u -> new UserDTO(u.getId(), u.getUsername(), u.getEmail(), u.getRole() != null ? u.getRole().getName() : null, u.isVerified()))
             .toList();
     }
 
@@ -172,6 +172,13 @@ public class UsersManagerService {
         }
 
         return jwtUtils.generateToken(user);
+    }
+
+    public void setPassword(String id, String newPassword) {
+        User user = userRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found"));
+        user.setPassword(passwordEncoder.encode(newPassword));
+        user.setTokenVersion(user.getTokenVersion() + 1);
+        userRepository.save(user);
     }
 
 }
