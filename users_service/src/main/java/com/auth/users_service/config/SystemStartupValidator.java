@@ -41,19 +41,39 @@ public class SystemStartupValidator {
                 return roleRepository.save(r);
             });
 
-            if (userRepository.findByUsername(baseUsername) == null) {
+            User existingUser = userRepository.findByUsername(baseUsername);
+            if (existingUser == null) {
                 User user = new User(baseUsername, rolesProperties.getBaseEmail(), passwordEncoder.encode(rolesProperties.getBasePassword()));
                 user.setRole(role);
                 user.setVerified(true);
                 user.setVerificationToken(null);
                 userRepository.save(user);
+            } else {
+                boolean changed = false;
+                if (existingUser.getRole() == null) {
+                    existingUser.setRole(role);
+                    changed = true;
+                }
+                if (!existingUser.isVerified()) {
+                    existingUser.setVerified(true);
+                    existingUser.setVerificationToken(null);
+                    changed = true;
+                }
+                if (changed) {
+                    userRepository.save(existingUser);
+                }
             }
         } else {
-            if (userRepository.findByUsername(baseUsername) == null) {
+            User existingUser = userRepository.findByUsername(baseUsername);
+            if (existingUser == null) {
                 User user = new User(baseUsername, rolesProperties.getBaseEmail(), passwordEncoder.encode(rolesProperties.getBasePassword()));
                 user.setVerified(true);
                 user.setVerificationToken(null);
                 userRepository.save(user);
+            } else if (!existingUser.isVerified()) {
+                existingUser.setVerified(true);
+                existingUser.setVerificationToken(null);
+                userRepository.save(existingUser);
             }
         }
     }

@@ -21,9 +21,10 @@ public class UserRegistrationRequest {
 
     private String roleId;
 
-    public UserRegistrationRequest(String username, String email, String password) {
+    public UserRegistrationRequest(String username, String email, String password, String roleId) {
         this.username = username;
         this.email = email;
         this.password = password;
+        this.roleId = roleId;
     }
 }

@@ -16,11 +16,11 @@ public class PermissionsService {
     private final PermissionRepository permissionRepository;
     private final RoleRepository roleRepository;
 
-    public Permission createPermission(String request) {
-        if (permissionRepository.existsByName(request)) {
+    public Permission createPermission(String name, String description) {
+        if (permissionRepository.existsByName(name)) {
             throw new RuntimeException("Permission already exists");
         }
-        Permission permission = new Permission(request);
+        Permission permission = new Permission(name, description);
         permissionRepository.save(permission);
         return permission;
     }
@@ -51,15 +51,16 @@ public class PermissionsService {
         permissionRepository.delete(permission);
     }
 
-    public Permission editPermission(String id, String newName) {
+    public Permission editPermission(String id, String newName, String description) {
         Permission permission = permissionRepository.findById(id).orElse(null);
         if (permission == null) {
             throw new RuntimeException("Permission not found");
         }
-        if (permissionRepository.existsByName(newName)) {
+        if (newName != null && !newName.equals(permission.getName()) && permissionRepository.existsByName(newName)) {
             throw new RuntimeException("Permission with the new name already exists");
         }
-        permission.setName(newName);
+        if (newName != null) permission.setName(newName);
+        if (description != null) permission.setDescription(description);
         permissionRepository.save(permission);
         return permission;
     }

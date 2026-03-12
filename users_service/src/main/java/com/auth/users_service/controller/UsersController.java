@@ -20,6 +20,7 @@ import com.auth.users_service.dto.EditUserRequest;
 import com.auth.users_service.service.UsersManagerService;
 
 import jakarta.validation.Valid;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 
 @RestController
@@ -33,6 +34,7 @@ public class UsersController {
         this.usersManagerService = usersManagerService;
     }
     
+    @PreAuthorize("hasAuthority('manage_users')")
     @GetMapping("/users")
     public ResponseEntity<Object> getUsers() {
     System.out.println("Get users endpoint hitted");
@@ -44,6 +46,7 @@ public class UsersController {
         
     }
 
+    @PreAuthorize("hasAuthority('manage_users')")
     @DeleteMapping("/users/delete/{id}")
     public ResponseEntity<Object> deleteUser(@PathVariable String id) {
         try {
@@ -73,6 +76,7 @@ public class UsersController {
         }
     }
 
+    @PreAuthorize("hasAuthority('manage_users')")
     @PutMapping("/users/update/{id}")
     public ResponseEntity<Object> updateUser(@PathVariable String id, @RequestBody EditUserRequest request) {
         try{
@@ -80,6 +84,21 @@ public class UsersController {
             return ResponseEntity.ok(Map.of("token", token));
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error: " + e.getMessage());
+        }
+    }
+
+    @PreAuthorize("hasAuthority('manage_users')")
+    @PutMapping("/users/set-password/{id}")
+    public ResponseEntity<Object> setPassword(@PathVariable String id, @RequestBody Map<String, String> body) {
+        try {
+            String newPassword = body.get("newPassword");
+            if (newPassword == null || newPassword.isBlank()) {
+                return ResponseEntity.badRequest().body(Map.of("message", "newPassword is required"));
+            }
+            usersManagerService.setPassword(id, newPassword);
+            return ResponseEntity.ok(Map.of("message", "Password updated successfully"));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("message", e.getMessage()));
         }
     }
     
