@@ -65,11 +65,9 @@ public class UsersManagerService {
 
         User user = new User(request.getUsername(), request.getEmail(), passwordEncoder.encode(request.getPassword()));
 
-        if (request.getRoleId() != null) {
-            Role role = roleRepository.findById(request.getRoleId())
-                .orElseThrow(() -> new RuntimeException("Role not found"));
-            user.setRole(role);
-        }
+        Role role = roleRepository.findByName("USER")
+            .orElseThrow(() -> new RuntimeException("Role not found"));
+        user.setRole(role);
 
         userRepository.save(user);
 
