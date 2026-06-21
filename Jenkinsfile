@@ -29,6 +29,7 @@ pipeline {
                     docker run -d \\
                         --name ${IMAGE_NAME}-staging \\
                         --restart unless-stopped \\
+                        --network eras-network \\
                         --env-file /etc/users-service-staging/.env \\
                         -p 8090:8090 \\
                         ${IMAGE_NAME}:${GIT_COMMIT}
@@ -58,6 +59,7 @@ pipeline {
                     docker run -d \\
                         --name ${IMAGE_NAME}-prod \\
                         --restart unless-stopped \\
+                        --network eras-network \\
                         --env-file /etc/users-service/.env \\
                         -p 8082:8082 \\
                         ${IMAGE_NAME}:${GIT_COMMIT}
