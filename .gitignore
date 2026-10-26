@@ -2,3 +2,8 @@
 *.db
 .env
 docker-compose.override.yml
+# Secrets / build output
+.env.*
+!.env.example
+*service-account*.json
+target/
