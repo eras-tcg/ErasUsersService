@@ -29,8 +29,6 @@ public class User implements UserDetails {
     private Integer tokenVersion;
     private boolean verified;
     private String verificationToken;
-    /** The player's icon, "icon:color" (an icon of the site's set and a color identity: B, G, P, R, W); null for the default. */
-    private String avatar;
 
     public User(String username, String email, String password) {
         this.username = username;
