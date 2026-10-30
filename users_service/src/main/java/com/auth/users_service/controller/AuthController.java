@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
@@ -53,6 +54,8 @@ public class AuthController {
         return ResponseEntity.ok("OK");
     }
 
+    /** Accounts are private: only an administrator (manage_users) creates them, from the users page. */
+    @PreAuthorize("hasAuthority('manage_users')")
     @PostMapping("/register")
     public ResponseEntity<Object> register(@Valid @RequestBody UserRegistrationRequest request, BindingResult bindingResult) {
         if (bindingResult.hasErrors()) {
