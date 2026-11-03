@@ -1,7 +1,8 @@
 package com.auth.users_service.dto;
 
 import com.auth.users_service.validation.ValidUsername;
-import com.auth.users_service.validation.ValidPassword;
+
+import jakarta.validation.constraints.NotBlank;
 
 
 @lombok.Data
@@ -10,7 +11,8 @@ public class LoginRequest {
     @ValidUsername
     private String username;
 
-    @ValidPassword
+    /** Only required here: the password policy applies when a password is set, not to existing ones signing in. */
+    @NotBlank(message = "Password is required")
     private String password;
     
     public LoginRequest(String username, String password) {

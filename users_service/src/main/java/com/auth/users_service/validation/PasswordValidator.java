@@ -17,10 +17,16 @@ public class PasswordValidator implements ConstraintValidator<ValidPassword, Str
 
     @Override
     public boolean isValid(String value, ConstraintValidatorContext ctx) {
-        if (value == null || value.isEmpty()) return refuse(ctx, "Password is required");
-        if (value.length() < MIN_LENGTH) return refuse(ctx, "Password must be at least " + MIN_LENGTH + " characters");
-        if (value.length() > MAX_LENGTH) return refuse(ctx, "Password must be at most " + MAX_LENGTH + " characters");
-        return true;
+        String problem = problem(value);
+        return problem == null || refuse(ctx, problem);
+    }
+
+    /** Why a password breaks the policy, or null if it is fine; for code that sets a password outside bean validation. */
+    public static String problem(String value) {
+        if (value == null || value.isEmpty()) return "Password is required";
+        if (value.length() < MIN_LENGTH) return "Password must be at least " + MIN_LENGTH + " characters";
+        if (value.length() > MAX_LENGTH) return "Password must be at most " + MAX_LENGTH + " characters";
+        return null;
     }
 
     private static boolean refuse(ConstraintValidatorContext ctx, String message) {

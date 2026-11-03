@@ -1,6 +1,10 @@
 package com.auth.users_service.service;
+import java.time.Instant;
 import java.util.List;
+import java.util.Objects;
 
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import com.auth.users_service.repository.UserRepository;
@@ -16,6 +20,7 @@ import com.auth.users_service.dto.ChangePasswordRequest;
 import com.auth.users_service.dto.EditUserRequest;
 import com.auth.users_service.dto.UserDTO;
 import com.auth.users_service.utils.JwtUtils;
+import com.auth.users_service.validation.PasswordValidator;
 
 @Service
 @lombok.RequiredArgsConstructor
@@ -83,8 +88,14 @@ public class UsersManagerService {
         if (user == null) {
             throw new RuntimeException("Invalid verification token");
         }
+        // A null expiry is a link sent before links expired: accepted, since it still works only once
+        Instant expiresAt = user.getVerificationTokenExpiresAt();
+        if (expiresAt != null && Instant.now().isAfter(expiresAt)) {
+            throw new RuntimeException("Verification link has expired");
+        }
         user.setVerified(true);
         user.setVerificationToken(null);
+        user.setVerificationTokenExpiresAt(null);
         userRepository.save(user);
     }
 
@@ -104,13 +115,9 @@ public class UsersManagerService {
 
     }
 
+    /** Always the signed-in user's own password: another account's is reset by an admin with setPassword. */
     public String changePassword(ChangePasswordRequest request) {
-        String username;
-        if (request.getUsername() == null) {
-            username = SecurityContextHolder.getContext().getAuthentication().getName();
-        } else {
-            username = request.getUsername();
-        }
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
 
         User user = userRepository.findByUsername(username);
         if (user == null) {
@@ -127,13 +134,21 @@ public class UsersManagerService {
         return token;
     }
 
+    /**
+     * Edits an account. Returns a new token only when the caller edits their own account (it replaces their
+     * session); for anyone else it returns null, so an admin never receives another user's session.
+     */
     public String updateUser(String id, EditUserRequest request) {
 
         User user = userRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found"));
 
+        // The base user cannot be edited at all, so its role cannot be changed either
         if (user.getUsername().equals(rolesProperties.getBaseUsername())) {
             throw new RuntimeException("The base user cannot be edited");
         }
+
+        Authentication caller = SecurityContextHolder.getContext().getAuthentication();
+        boolean editingSelf = caller != null && caller.getName().equals(user.getUsername());
 
         User UserFoundByUsername = userRepository.findByUsername(request.getUsername());
 
@@ -146,12 +161,16 @@ public class UsersManagerService {
             throw new RuntimeException("Email already exists");
         }
 
-        if (request.getRoleId() != null) {
+        // No roleId keeps the current role; a different one needs manage_roles and ends the user's old sessions
+        String currentRoleId = user.getRole() != null ? user.getRole().getId() : null;
+        if (request.getRoleId() != null && !request.getRoleId().equals(currentRoleId)) {
+            if (!hasAuthority(caller, "manage_roles")) {
+                throw new AccessDeniedException("Changing a user's role needs the manage_roles permission");
+            }
             Role role = roleRepository.findById(request.getRoleId())
                 .orElseThrow(() -> new RuntimeException("Role not found"));
             user.setRole(role);
-        } else {
-            user.setRole(null);
+            user.setTokenVersion(user.getTokenVersion() + 1);
         }
 
         if (request.getOldPassword() != null && request.getNewPassword() != null) {
@@ -169,11 +188,27 @@ public class UsersManagerService {
             userRepository.save(user);
         }
 
-        return jwtUtils.generateToken(user);
+        return editingSelf ? jwtUtils.generateToken(user) : null;
     }
 
+    private static boolean hasAuthority(Authentication auth, String authority) {
+        return auth != null && auth.getAuthorities().stream()
+            .anyMatch(a -> Objects.equals(a.getAuthority(), authority));
+    }
+
+    /** Admin reset of another account's password: same policy as registration, and the user's sessions end. */
     public void setPassword(String id, String newPassword) {
         User user = userRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (user.getUsername().equals(rolesProperties.getBaseUsername())) {
+            throw new RuntimeException("The base user cannot be edited");
+        }
+
+        String problem = PasswordValidator.problem(newPassword);
+        if (problem != null) {
+            throw new IllegalArgumentException(problem);
+        }
+
         user.setPassword(passwordEncoder.encode(newPassword));
         user.setTokenVersion(user.getTokenVersion() + 1);
         userRepository.save(user);

@@ -62,7 +62,7 @@ public class SecurityConfig {
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // Set session management to stateless
             .authorizeHttpRequests((request) -> request // Allow unauthenticated access to the /health endpoint, require authentication for all other endpoints
                     // permit auth routes (now under /api/auth) and health; accounts are private: registering needs manage_users
-                    .requestMatchers("/api/health", "/api/auth/health", "/api/auth/login", "/api/auth/change-password", "/api/auth/verify").permitAll()
+                    .requestMatchers("/api/health", "/api/auth/health", "/api/auth/login", "/api/auth/verify").permitAll()
                 .anyRequest().authenticated()
             )
             // No valid session (expired or missing token): 401, so the site signs out; 403 stays for a valid session without the permission

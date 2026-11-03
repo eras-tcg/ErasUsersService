@@ -20,6 +20,7 @@ import com.auth.users_service.dto.EditUserRequest;
 import com.auth.users_service.service.UsersManagerService;
 
 import jakarta.validation.Valid;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 
 
@@ -80,8 +81,11 @@ public class UsersController {
     @PutMapping("/users/update/{id}")
     public ResponseEntity<Object> updateUser(@PathVariable String id, @RequestBody EditUserRequest request) {
         try{
+            // A token comes back only when the caller edited their own account
             String token = usersManagerService.updateUser(id, request);
-            return ResponseEntity.ok(Map.of("token", token));
+            return ResponseEntity.ok(token != null ? Map.of("token", token) : Map.of());
+        } catch (AccessDeniedException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Error: " + e.getMessage());
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error: " + e.getMessage());
         }
@@ -97,6 +101,8 @@ public class UsersController {
             }
             usersManagerService.setPassword(id, newPassword);
             return ResponseEntity.ok(Map.of("message", "Password updated successfully"));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("message", e.getMessage()));
         }
