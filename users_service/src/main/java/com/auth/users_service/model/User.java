@@ -6,6 +6,8 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -29,6 +31,11 @@ public class User implements UserDetails {
     private Integer tokenVersion;
     private boolean verified;
     private String verificationToken;
+    /** When the verification link stops working. Null on accounts created before links expired (accepted, see verifyUser). */
+    private Instant verificationTokenExpiresAt;
+
+    /** How long a verification link works. */
+    public static final Duration VERIFICATION_TOKEN_TTL = Duration.ofHours(48);
 
     public User(String username, String email, String password) {
         this.username = username;
@@ -37,6 +44,7 @@ public class User implements UserDetails {
         this.tokenVersion = 0;
         this.verified = false;
         this.verificationToken = UUID.randomUUID().toString();
+        this.verificationTokenExpiresAt = Instant.now().plus(VERIFICATION_TOKEN_TTL);
     }
 
     public Collection<? extends GrantedAuthority> getAuthorities() {

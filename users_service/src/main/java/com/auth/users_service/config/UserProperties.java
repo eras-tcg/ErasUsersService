@@ -9,7 +9,6 @@ import org.springframework.stereotype.Component;
 public class UserProperties {
 
     private Username username = new Username();
-    private Password password = new Password();
 
 
     private boolean canDeleteOwnAccount;
@@ -18,17 +17,6 @@ public class UserProperties {
     public static class Username {
         private int minLength;
         private int maxLength;
-    }
-
-    @lombok.Data
-    public static class Password {
-        private int minLength;
-        private int maxLength;
-        private boolean hasUppercase;
-        private boolean hasLowercase;
-        private boolean hasDigit;
-        private boolean hasSpecial;
-        private String specialChars;
     }
 
 }
