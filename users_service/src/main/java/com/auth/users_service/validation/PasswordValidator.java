@@ -3,60 +3,35 @@ package com.auth.users_service.validation;
 import org.springframework.stereotype.Component;
 
 import jakarta.validation.ConstraintValidator;
-import com.auth.users_service.config.UserProperties;
+import jakarta.validation.ConstraintValidatorContext;
 
-
-
+/**
+ * A password only needs MIN_LENGTH characters (no required kinds of character). MAX_LENGTH is a technical cap:
+ * BCrypt reads only the first 72 bytes of a password.
+ */
 @Component
-public class PasswordValidator implements ConstraintValidator<ValidPassword, String>  {
+public class PasswordValidator implements ConstraintValidator<ValidPassword, String> {
 
-    private UserProperties.Password passwordProperties;
-
-    public PasswordValidator(UserProperties userProperties) {
-        this.passwordProperties = userProperties.getPassword();
-    }
-
+    public static final int MIN_LENGTH = 8;
+    public static final int MAX_LENGTH = 64;
 
     @Override
-    public boolean isValid(String value, jakarta.validation.ConstraintValidatorContext ctx) {
-        if (value == null || value.isBlank()) {
-            ctx.disableDefaultConstraintViolation();
-            ctx.buildConstraintViolationWithTemplate("Password is required").addConstraintViolation();
-            return false;
-        }
-        if (value.length() < passwordProperties.getMinLength() || value.length() > passwordProperties.getMaxLength()) {
-            ctx.disableDefaultConstraintViolation();
-            ctx.buildConstraintViolationWithTemplate("Password must be between " + passwordProperties.getMinLength() + " and " + passwordProperties.getMaxLength() + " characters").addConstraintViolation();
-            return false;
-        }
-        if (passwordProperties.isHasUppercase() && !value.matches(".*[A-Z].*")) {
-            ctx.disableDefaultConstraintViolation();
-            ctx.buildConstraintViolationWithTemplate("Password must contain at least one uppercase letter").addConstraintViolation();
-            return false;
-        }
-        if (passwordProperties.isHasLowercase() && !value.matches(".*[a-z].*")) {
-            ctx.disableDefaultConstraintViolation();
-            ctx.buildConstraintViolationWithTemplate("Password must contain at least one lowercase letter").addConstraintViolation();
-            return false;
-        }
-        if (passwordProperties.isHasDigit() && !value.matches(".*\\d.*")) {
-            ctx.disableDefaultConstraintViolation();
-            ctx.buildConstraintViolationWithTemplate("Password must contain at least one digit").addConstraintViolation();
-            return false;
-        }
-        if (passwordProperties.isHasSpecial()) {
-            boolean hasSpecial = passwordProperties.getSpecialChars().chars()
-                .anyMatch(c -> value.indexOf(c) >= 0);
-            if (!hasSpecial) {
-                ctx.disableDefaultConstraintViolation();
-                ctx.buildConstraintViolationWithTemplate(
-                    "Password must contain at least one special character (" + passwordProperties.getSpecialChars() + ")"
-                ).addConstraintViolation();
-                return false;
-            }
-        }
-
-        return true;
+    public boolean isValid(String value, ConstraintValidatorContext ctx) {
+        String problem = problem(value);
+        return problem == null || refuse(ctx, problem);
     }
-    
+
+    /** Why a password breaks the policy, or null if it is fine; for code that sets a password outside bean validation. */
+    public static String problem(String value) {
+        if (value == null || value.isEmpty()) return "Password is required";
+        if (value.length() < MIN_LENGTH) return "Password must be at least " + MIN_LENGTH + " characters";
+        if (value.length() > MAX_LENGTH) return "Password must be at most " + MAX_LENGTH + " characters";
+        return null;
+    }
+
+    private static boolean refuse(ConstraintValidatorContext ctx, String message) {
+        ctx.disableDefaultConstraintViolation();
+        ctx.buildConstraintViolationWithTemplate(message).addConstraintViolation();
+        return false;
+    }
 }

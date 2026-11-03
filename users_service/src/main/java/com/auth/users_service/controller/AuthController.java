@@ -16,8 +16,10 @@ import com.auth.users_service.dto.LoginRequest;
 import com.auth.users_service.dto.CheckAccessRequest;
 import com.auth.users_service.service.AuthService;
 import com.auth.users_service.service.CheckAccessService;
+import com.auth.users_service.service.LoginThrottle;
 import com.auth.users_service.service.UsersManagerService;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.validation.BindingResult;
 import java.util.HashMap;
@@ -72,7 +74,8 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<Object> login(@Valid @RequestBody LoginRequest request, BindingResult bindingResult) {
+    public ResponseEntity<Object> login(@Valid @RequestBody LoginRequest request, BindingResult bindingResult,
+                                        HttpServletRequest httpRequest) {
         if (bindingResult.hasErrors()) {
             Map<String, String> errors = new HashMap<>();
             bindingResult.getFieldErrors().forEach(e -> errors.put(e.getField(), e.getDefaultMessage()));
@@ -81,8 +84,10 @@ public class AuthController {
         System.out.println("Login endpoint hitted with username: " + request.getUsername());
 
         try {
-            String token = authService.login(request.getUsername(), request.getPassword());
+            String token = authService.login(request.getUsername(), request.getPassword(), LoginThrottle.clientIp(httpRequest));
             return ResponseEntity.ok(Map.of("token", token));
+        } catch (LoginThrottle.TooManyAttemptsException e) {
+            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body("Error: " + e.getMessage());
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Error: " + e.getMessage());
         }
