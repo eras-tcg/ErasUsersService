@@ -24,16 +24,19 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtUtils jwtUtils;
     private final LoginThrottle loginThrottle;
+    private final LoginActivity loginActivity;
 
     /** Checked when the username does not exist, so that case takes as long as a wrong password. */
     private final String dummyHash;
 
-    public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtUtils jwtUtils, LoginThrottle loginThrottle) {
+    public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtUtils jwtUtils, LoginThrottle loginThrottle,
+                       LoginActivity loginActivity) {
         // Constructor injection of dependencies
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtils = jwtUtils;
         this.loginThrottle = loginThrottle;
+        this.loginActivity = loginActivity;
         this.dummyHash = passwordEncoder.encode(UUID.randomUUID().toString());
     }
 
@@ -59,6 +62,7 @@ public class AuthService {
 
         loginThrottle.recordSuccess(username);
         String token = jwtUtils.generateToken(existingUser);
+        loginActivity.record(existingUser.getId());
 
         System.out.println("User logged in with username: " + username);
 
