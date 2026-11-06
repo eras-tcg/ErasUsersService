@@ -27,12 +27,13 @@ class AuthServiceTest {
     private final PasswordEncoder encoder = mock(PasswordEncoder.class);
     private final JwtUtils jwt = mock(JwtUtils.class);
     private final LoginThrottle throttle = mock(LoginThrottle.class);
+    private final LoginActivity activity = mock(LoginActivity.class);
     private AuthService service;
 
     @BeforeEach
     void setUp() {
         when(encoder.encode(anyString())).thenReturn(DUMMY_HASH);
-        service = new AuthService(users, encoder, jwt, throttle);
+        service = new AuthService(users, encoder, jwt, throttle, activity);
     }
 
     @Test
@@ -47,6 +48,7 @@ class AuthServiceTest {
 
         verify(throttle).recordFailure("nobody", "ip");
         verify(throttle).recordFailure("ana", "ip");
+        verify(activity, never()).record(any());
     }
 
     @Test
@@ -73,6 +75,7 @@ class AuthServiceTest {
 
         assertThat(service.login("ana", "pw", "ip")).isEqualTo("token");
         verify(throttle).recordSuccess("ana");
+        verify(activity).record(ana.getId());
     }
 
     @Test
