@@ -44,7 +44,9 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(corsProperties.getAllowedOrigins());
+        // The site's own pages are same-origin (forwarded headers); the Android app (https://localhost) sends its
+        // session as a bearer token, no cookies
+        config.setAllowedOrigins(corsProperties.origins());
         config.addAllowedMethod("*");
         config.addAllowedHeader("*");
 
