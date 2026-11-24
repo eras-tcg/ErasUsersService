@@ -197,6 +197,19 @@ public class UsersManagerService {
     }
 
     /** Admin reset of another account's password: same policy as registration, and the user's sessions end. */
+    /**
+     * Marks an account as verified by hand (an administrator, when the player's mail never arrived), as opening the
+     * verification link would: its pending link stops working. Already verified: nothing changes.
+     */
+    public void verifyByHand(String id) {
+        User user = userRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found"));
+        if (user.isVerified()) return;
+        user.setVerified(true);
+        user.setVerificationToken(null);
+        user.setVerificationTokenExpiresAt(null);
+        userRepository.save(user);
+    }
+
     public void setPassword(String id, String newPassword) {
         User user = userRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found"));
 

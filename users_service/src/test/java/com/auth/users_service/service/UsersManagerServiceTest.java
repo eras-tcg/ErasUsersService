@@ -230,6 +230,28 @@ class UsersManagerServiceTest {
         assertThat(bob.getVerificationToken()).isNull();
     }
 
+    @Test
+    void anAdministratorVerifiesAnAccountByHandAndItsPendingLinkStopsWorking() {
+        User carol = user("u-carol", "carol", userRole);
+        carol.setVerified(false);
+        when(users.findById("u-carol")).thenReturn(Optional.of(carol));
+
+        service.verifyByHand("u-carol");
+
+        assertThat(carol.isVerified()).isTrue();
+        assertThat(carol.getVerificationToken()).isNull();
+        assertThat(carol.getVerificationTokenExpiresAt()).isNull();
+        verify(users).save(carol);
+
+        User dave = user("u-dave", "dave", userRole);
+        when(users.findById("u-dave")).thenReturn(Optional.of(dave));
+        service.verifyByHand("u-dave");
+        verify(users, never()).save(dave);
+
+        when(users.findById("u-none")).thenReturn(Optional.empty());
+        assertThatThrownBy(() -> service.verifyByHand("u-none")).hasMessage("User not found");
+    }
+
     private static void signIn(String username, String... authorities) {
         List<SimpleGrantedAuthority> granted = java.util.Arrays.stream(authorities).map(SimpleGrantedAuthority::new).toList();
         SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(username, null, granted));

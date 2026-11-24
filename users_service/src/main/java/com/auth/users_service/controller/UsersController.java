@@ -91,6 +91,18 @@ public class UsersController {
         }
     }
 
+    /** An administrator verifies an account by hand (the player never got the mail). */
+    @PreAuthorize("hasAuthority('manage_users')")
+    @PutMapping("/users/verify/{id}")
+    public ResponseEntity<Object> verifyByHand(@PathVariable String id) {
+        try {
+            usersManagerService.verifyByHand(id);
+            return ResponseEntity.ok(Map.of("message", "User verified"));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", e.getMessage()));
+        }
+    }
+
     @PreAuthorize("hasAuthority('manage_users')")
     @PutMapping("/users/set-password/{id}")
     public ResponseEntity<Object> setPassword(@PathVariable String id, @RequestBody Map<String, String> body) {
