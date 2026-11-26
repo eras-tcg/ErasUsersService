@@ -1,7 +1,7 @@
 # Build on GitHub, publish to GHCR, deploy to AWS with eras-tcg/infra (deploy-aws.yml: image copied to ECR,
 # eras-deploy on the server through SSM with healthcheck and rollback).
 #   PR to develop/main -> tests + build only
-#   push to develop    -> build + push + deploy staging
+#   push to develop    -> build + push only (no staging since 2026-11-26)
 #   push to main       -> build + push + deploy production (waits for approval)
 #   Run workflow       -> redeploy an existing image (rollback)
 name: CI/CD
@@ -16,7 +16,7 @@ on:
       environment:
         description: Target environment
         type: choice
-        options: [staging, production]
+        options: [production]
         required: true
       image_tag:
         description: Commit sha of an image already published (see a previous run)
@@ -104,19 +104,6 @@ jobs:
           labels: org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-
-  deploy-staging:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
-    needs: build
-    permissions:
-      contents: read
-      packages: read
-    uses: eras-tcg/infra/.github/workflows/deploy-aws.yml@main
-    secrets: inherit
-    with:
-      service: users-service
-      environment: staging
-      image_tag: ${{ github.sha }}
 
   deploy-production:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
